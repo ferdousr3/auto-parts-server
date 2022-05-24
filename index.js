@@ -23,10 +23,14 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    const ProductsCollection = client.db("autoParts").collection("products");
+    const productsCollection = client.db("autoParts").collection("products");
 
     //add product
-    app.post()
+    app.post('/products',async(req,res)=>{
+       const newProduct = req.body;
+       const result = await productsCollection.insertOne(newProduct);
+       res.send(result);
+    })
   } finally {
     //here error or something
   }
