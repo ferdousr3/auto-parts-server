@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const ObjectId = require("mongodb").ObjectId;
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -43,8 +44,6 @@ async function run() {
     const reviewsCollection = client.db("autoParts").collection("reviews");
     const usersCollection = client.db("autoParts").collection("users");
 
-
-
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
       const requesterAccount = await usersCollection.findOne({
@@ -54,6 +53,17 @@ async function run() {
         next();
       } else {
         res.status(403).send({ message: "forbidden" });
+      }
+    };
+    const notAdmin = async (req, res, next) => {
+      const requester = req.decoded.email;
+      const requesterAccount = await usersCollection.findOne({
+        email: requester,
+      });
+      if (requesterAccount.role === "admin") {
+        res.status(403).send({ message: "forbidden" });
+      } else {
+        next();
       }
     };
     //add product
@@ -69,9 +79,16 @@ async function run() {
       const products = await cursor.toArray();
       res.send(products);
     });
+    //delete products
+    app.delete("/product/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await productsCollection.deleteOne(query);
+      res.send(result);
+    });
 
     //add review
-    app.post("/reviews", async (req, res) => {
+    app.post("/reviews", verifyJWT, notAdmin, async (req, res) => {
       const newReview = req.body;
       const result = await reviewsCollection.insertOne(newReview);
       res.send(result);
@@ -84,7 +101,7 @@ async function run() {
       res.send(reviews);
     });
     //get all users
-    app.get("/user", verifyJWT, async (req, res) => {
+    app.get("/user", verifyJWT, verifyAdmin, async (req, res) => {
       const users = await usersCollection.find().toArray();
       res.send(users);
     });
@@ -102,7 +119,7 @@ async function run() {
       const updateDoc = {
         $set: { role: "admin" },
       };
-      const result = await userCollection.updateOne(filter, updateDoc);
+      const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
     // store user to database
