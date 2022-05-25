@@ -43,6 +43,9 @@ async function run() {
     const productsCollection = client.db("autoParts").collection("products");
     const reviewsCollection = client.db("autoParts").collection("reviews");
     const usersCollection = client.db("autoParts").collection("users");
+    const updateUserCollection = client
+      .db("autoParts")
+      .collection("updateUsers");
 
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
@@ -111,6 +114,49 @@ async function run() {
       const user = await usersCollection.findOne({ email: email });
       const isAdmin = user.role === "admin";
       res.send({ admin: isAdmin });
+    });
+    //get single user
+    app.get("/user/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const user = await usersCollection.findOne(query);
+      res.send(user);
+    });
+
+    //get single new user
+    app.get("/newUser/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = await updateUserCollection.findOne({ email: email });
+      res.send(user);
+    });
+    //add new user
+    app.post("/newUser", verifyJWT, async (req, res) => {
+      const newUser = req.body;
+      const result = await updateUserCollection.insertOne(newUser);
+      res.send(result);
+    });
+    // //user update
+
+    app.put("/newUser/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const updatedUsers = req.body;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          email: updatedUsers.email,
+          name: updatedUsers.displayName,
+          phone: updatedUsers.value,
+          address: updatedUsers.value,
+          fbLink: updatedUsers.value,
+        },
+      };
+      const result = await updateUserCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      res.send(result);
     });
     //add new or update Admin
     app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
