@@ -123,41 +123,6 @@ async function run() {
       res.send(user);
     });
 
-    //get single new user
-    app.get("/newUser/:email", async (req, res) => {
-      const email = req.params.email;
-      const user = await updateUserCollection.findOne({ email: email });
-      res.send(user);
-    });
-    //add new user
-    app.post("/newUser", verifyJWT, async (req, res) => {
-      const newUser = req.body;
-      const result = await updateUserCollection.insertOne(newUser);
-      res.send(result);
-    });
-    // //user update
-
-    app.put("/newUser/:email", verifyJWT, async (req, res) => {
-      const email = req.params.email;
-      const updatedUsers = req.body;
-      const filter = { email: email };
-      const options = { upsert: true };
-      const updatedDoc = {
-        $set: {
-          email: updatedUsers.email,
-          name: updatedUsers.displayName,
-          phone: updatedUsers.value,
-          address: updatedUsers.value,
-          fbLink: updatedUsers.value,
-        },
-      };
-      const result = await updateUserCollection.updateOne(
-        filter,
-        updatedDoc,
-        options
-      );
-      res.send(result);
-    });
     //add new or update Admin
     app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
@@ -168,7 +133,9 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
-    // store user to database
+
+
+    // store user to database for make admin
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -178,6 +145,42 @@ async function run() {
         $set: user,
       };
       const result = await usersCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      const token = jwt.sign(
+        { email: email },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "12h" }
+      );
+      res.send({ result, token });
+    });
+    //get updated user email
+    app.get("/updatedUser/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = await updateUserCollection.findOne({ email: email });
+      res.send(user);
+    });
+    // store user to database for update user information
+    app.put("/updatedUser/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      console.log(user);
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          email: user.email,
+          name: user.name,
+          phone: user.phone,
+          address: user.address,
+          fbLink: user.fbLink,
+          img: user.img,
+        },
+      };
+      console.log(updateDoc);
+      const result = await updateUserCollection.updateOne(
         filter,
         updateDoc,
         options
