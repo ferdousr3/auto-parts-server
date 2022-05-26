@@ -82,6 +82,13 @@ async function run() {
       const products = await cursor.toArray();
       res.send(products);
     });
+    //get single  Product
+    app.get("/product/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const product= await productsCollection.findOne(query);
+      res.send(product);
+    });
     //delete products
     app.delete("/product/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
@@ -157,16 +164,15 @@ async function run() {
       res.send({ result, token });
     });
     //get updated user email
-    app.get("/updatedUser/:email", async (req, res) => {
+    app.get("/updatedUser/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const user = await updateUserCollection.findOne({ email: email });
       res.send(user);
     });
     // store user to database for update user information
-    app.put("/updatedUser/:email", async (req, res) => {
+    app.put("/updatedUser/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const user = req.body;
-      console.log(user);
       const filter = { email: email };
       const options = { upsert: true };
       const updateDoc = {
