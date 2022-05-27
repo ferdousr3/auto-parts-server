@@ -43,6 +43,7 @@ async function run() {
     const productsCollection = client.db("autoParts").collection("products");
     const reviewsCollection = client.db("autoParts").collection("reviews");
     const usersCollection = client.db("autoParts").collection("users");
+    const ordersCollection = client.db("autoParts").collection("orders");
     const updateUserCollection = client
       .db("autoParts")
       .collection("updateUsers");
@@ -70,7 +71,7 @@ async function run() {
       }
     };
     //add product
-    app.post("/products", async (req, res) => {
+    app.post("/products", verifyJWT, async (req, res) => {
       const newProduct = req.body;
       const result = await productsCollection.insertOne(newProduct);
       res.send(result);
@@ -86,7 +87,7 @@ async function run() {
     app.get("/product/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const product= await productsCollection.findOne(query);
+      const product = await productsCollection.findOne(query);
       res.send(product);
     });
     //delete products
@@ -140,7 +141,6 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
-
 
     // store user to database for make admin
     app.put("/user/:email", async (req, res) => {
@@ -198,6 +198,18 @@ async function run() {
       );
       res.send({ result, token });
     });
+
+    //add order from customer
+    app.post("/order", verifyJWT, async (req, res) => {
+      const newOrder = req.body;
+      const result = await ordersCollection.insertOne(newOrder);
+      res.send(result);
+    });
+    //get all orders for admin
+   app.get("/order", verifyJWT, async (req, res) => {
+     const orders = await ordersCollection.find().toArray();
+     res.send(orders);
+   });
   } finally {
     //here error or something
   }
