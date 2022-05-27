@@ -166,6 +166,7 @@ async function run() {
     //get updated user email
     app.get("/updatedUser/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
+      console.log(email);
       const user = await updateUserCollection.findOne({ email: email });
       res.send(user);
     });
@@ -200,16 +201,37 @@ async function run() {
     });
 
     //add order from customer
-    app.post("/order", verifyJWT, async (req, res) => {
+    app.post("/order", verifyJWT, notAdmin, async (req, res) => {
       const newOrder = req.body;
       const result = await ordersCollection.insertOne(newOrder);
       res.send(result);
     });
     //get all orders for admin
-   app.get("/order", verifyJWT, async (req, res) => {
-     const orders = await ordersCollection.find().toArray();
-     res.send(orders);
-   });
+    app.get("/order", verifyJWT, verifyAdmin, async (req, res) => {
+      const orders = await ordersCollection.find().toArray();
+      res.send(orders);
+    });
+
+    // get order data for per user
+    app.get("/singleOrder", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (email === decodedEmail) {
+        const query = { email: email };
+        const order = await ordersCollection.find(query).toArray();
+        return res.send(order);
+      } else {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+    });
+    // delete single order
+     app.delete("/order/:id", verifyJWT, notAdmin, async (req, res) => {
+       const id = req.params.id;
+       const query = { _id: ObjectId(id) };
+       const result = await productsCollection.deleteOne(query);
+       res.send(result);
+     });
+
   } finally {
     //here error or something
   }
