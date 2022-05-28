@@ -172,7 +172,7 @@ async function run() {
       res.send(user);
     });
     // store user to database for update user information
-    app.put("/updatedUser/:email", verifyJWT, async (req, res) => {
+    app.put("/updatedUser/:email",  async (req, res) => {
       const email = req.params.email;
       const user = req.body;
       const filter = { email: email };
@@ -187,7 +187,6 @@ async function run() {
           img: user.img,
         },
       };
-      console.log(updateDoc);
       const result = await updateUserCollection.updateOne(
         filter,
         updateDoc,
