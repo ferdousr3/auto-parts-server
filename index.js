@@ -256,6 +256,16 @@ async function run() {
       const result = await ordersCollection.findOne(query);
       res.send(result);
     });
+    //set order shipping  for admin
+    app.put("/order/shipping/:id", verifyJWT, verifyAdmin, async (req, res) => {
+       const id = req.params.id;
+       const query = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: { shipping: true, },
+      };
+      const result = await ordersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
     // delete single order
     app.delete("/order/:id", verifyJWT, notAdmin, async (req, res) => {
       const id = req.params.id;
