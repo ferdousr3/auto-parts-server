@@ -49,7 +49,7 @@ async function run() {
     const updateUserCollection = client
       .db("autoParts")
       .collection("updateUsers");
-
+    // for admin verify
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
       const requesterAccount = await usersCollection.findOne({
@@ -61,6 +61,7 @@ async function run() {
         res.status(403).send({ message: "forbidden" });
       }
     };
+    // no admin verify
     const notAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
       const requesterAccount = await usersCollection.findOne({
@@ -171,8 +172,32 @@ async function run() {
       const user = await updateUserCollection.findOne({ email: email });
       res.send(user);
     });
+
     // store user to database for update user information
-    app.put("/updatedUser/:email",  async (req, res) => {
+    app.put("/updateUser/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          email: user.email,
+        },
+      };
+      const result = await updateUserCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      const token = jwt.sign(
+        { email: email },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "12h" }
+      );
+      res.send({ result, token });
+    });
+    // store user to database for update user information
+    app.put("/updatedUser/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
       const filter = { email: email };
@@ -270,7 +295,6 @@ async function run() {
       const result = await paymentsCollection.insertOne(payment);
       const updatedOrder = await ordersCollection.updateOne(filter, updateDoc);
       res.send(updatedOrder);
-      console.log(updatedOrder);
     });
   } finally {
     //here error or something
