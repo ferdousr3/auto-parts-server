@@ -12,7 +12,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 app.use(cors());
 app.use(express.json());
 
-//mongoDB connection
+//mongoDB connection to database
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@autoparts.lid8x.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
